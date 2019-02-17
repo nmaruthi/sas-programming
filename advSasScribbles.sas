@@ -191,4 +191,28 @@ proc sql;
 	group by Department;
 quit;
 
-/*Joins*/
+/*In-line view*/
+proc sql;
+title 'Employees with salaries less than';
+title2 '95% of the average for their job';
+	select employee_name, emp.job_title,
+		salary format=comma7., job_avg format=comma7.
+	from (
+		select
+			job_title,
+			avg(salary) as job_avg format=comma7.
+			from
+			orion.employee_payroll as p,
+			orion.employee_organization as o
+			where
+			p.employee_id=o.employee_id
+			and not employee_term_date
+			and o.department='sales'
+			group by job_title
+	) as job,
+	orion.salesstaff as emp
+	where 
+	emp.job_title=job.job_title
+	and salary < job_avg*0.95
+	order by job_title, employee_name;
+quit;
